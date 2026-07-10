@@ -1,0 +1,158 @@
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import formatCurrency from '../utils/formatCurrency';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+function formatDate(value) {
+  if (!value) {
+    return '';
+  }
+
+  return new Date(value).toLocaleDateString('en-GB');
+}
+
+function InvoiceList() {
+  const navigate = useNavigate();
+  const [invoices, setInvoices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  async function loadInvoices(searchValue = '') {
+    try {
+      setLoading(true);
+      const params = searchValue.trim() ? { search: searchValue.trim() } : {};
+      const response = await axios.get(`${API_URL}/invoices`, { params });
+      setInvoices(response.data.invoices || []);
+      setError('');
+    } catch (fetchError) {
+      setError('Failed to load invoices.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadInvoices();
+  }, []);
+
+  function handleSearchSubmit(event) {
+    event.preventDefault();
+    loadInvoices(searchTerm);
+  }
+
+  function handleClearSearch() {
+    setSearchTerm('');
+    loadInvoices('');
+  }
+
+  async function handleDelete(id) {
+    if (!window.confirm('Delete this invoice?')) {
+      return;
+    }
+
+    try {
+      await axios.delete(`${API_URL}/invoices/${id}`);
+      loadInvoices();
+    } catch (deleteError) {
+      setError('Failed to delete invoice.');
+    }
+  }
+
+  return (
+    <div className="app-shell">
+      <header className="hero-bar">
+        <div>
+          <p className="eyebrow">Patel Industries</p>
+          <h1>GST Billing App</h1>
+          <p className="hero-copy">
+            Create invoices, revisit old bills, and print the Patel Industries format in one place.
+          </p>
+        </div>
+        <button type="button" className="primary-button" onClick={() => navigate('/new')}>
+          + New Invoice
+        </button>
+      </header>
+
+      <main className="panel">
+        <form className="mb-5 flex flex-col gap-3 md:flex-row md:items-end" onSubmit={handleSearchSubmit}>
+          <label className="flex-1">
+            <span className="mb-2 block text-sm font-semibold text-slate-700">Search by buyer name or bill number</span>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Type a buyer name or invoice number"
+              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-amber-600 focus:ring-4 focus:ring-amber-100"
+            />
+          </label>
+          <div className="flex gap-2">
+            <button type="submit" className="primary-button">
+              Search
+            </button>
+            <button type="button" className="secondary-button" onClick={handleClearSearch}>
+              Clear
+            </button>
+          </div>
+        </form>
+
+        {error && <div className="error-banner">{error}</div>}
+
+        {loading ? (
+          <div className="empty-state">Loading invoices...</div>
+        ) : invoices.length === 0 ? (
+          <div className="empty-state">
+            {searchTerm.trim() ? 'No invoices matched your search.' : 'No invoices yet. Start with a new bill.'}
+            <div className="empty-action">
+              <Link to="/new" className="primary-button inline-button">
+                + New Invoice
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="table-wrap">
+            <table className="list-table">
+              <thead>
+                <tr>
+                  <th>Invoice #</th>
+                  <th>Date</th>
+                  <th>Buyer Name</th>
+                  <th>Grand Total</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {invoices.map((invoice) => (
+                  <tr key={invoice._id}>
+                    <td>{String(invoice.invoiceNumber).padStart(3, '0')}</td>
+                    <td>{formatDate(invoice.invoiceDate)}</td>
+                    <td>{invoice.buyerName}</td>
+                    <td>₹{formatCurrency(invoice.grandTotal)}</td>
+                    <td>
+                      <div className="action-group">
+                        <button
+                          type="button"
+                          className="secondary-button"
+                          onClick={() => navigate(`/invoice/${invoice._id}`)}
+                        >
+                          View
+                        </button>
+                        <button type="button" className="danger-button" onClick={() => handleDelete(invoice._id)}>
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
+
+export default InvoiceList;
