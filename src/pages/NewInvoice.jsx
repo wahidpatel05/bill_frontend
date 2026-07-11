@@ -6,8 +6,7 @@ import calculateTotals from '../utils/calculateTotals';
 import amountToWords from '../utils/amountToWords';
 import formatCurrency from '../utils/formatCurrency';
 import getStateCode from '../utils/getStateCode';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+import API_URL from '../utils/api';
 
 function createEmptyItem() {
   return {
