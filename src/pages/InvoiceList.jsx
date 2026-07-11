@@ -112,7 +112,8 @@ function InvoiceList() {
           </div>
         ) : (
           <div className="table-wrap">
-            <table className="list-table">
+            {/* Desktop Table View */}
+            <table className="list-table hidden md:table">
               <thead>
                 <tr>
                   <th>Invoice #</th>
@@ -147,6 +148,40 @@ function InvoiceList() {
                 ))}
               </tbody>
             </table>
+
+            {/* Mobile Cards View */}
+            <div className="flex flex-col gap-4 md:hidden">
+              {invoices.map((invoice) => (
+                <div key={invoice._id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="mb-2 flex items-center justify-between border-b border-slate-100 pb-2">
+                    <span className="font-bold text-slate-800">
+                      Invoice #{String(invoice.invoiceNumber).padStart(3, '0')}
+                    </span>
+                    <span className="text-sm text-slate-500">{formatDate(invoice.invoiceDate)}</span>
+                  </div>
+                  <div className="mb-4">
+                    <div className="text-sm text-slate-500">Buyer Name</div>
+                    <div className="font-semibold text-slate-900">{invoice.buyerName}</div>
+                  </div>
+                  <div className="mb-4">
+                    <div className="text-sm text-slate-500">Grand Total</div>
+                    <div className="text-lg font-bold text-amber-700">₹{formatCurrency(invoice.grandTotal)}</div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      className="secondary-button flex-1"
+                      onClick={() => navigate(`/invoice/${invoice._id}`)}
+                    >
+                      View
+                    </button>
+                    <button type="button" className="danger-button flex-1" onClick={() => handleDelete(invoice._id)}>
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </main>
