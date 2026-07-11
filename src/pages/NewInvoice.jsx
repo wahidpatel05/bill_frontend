@@ -102,31 +102,49 @@ function NewInvoice() {
     }));
 
     if (form.buyerGstin.length !== 15) {
-      setGstinLookupStatus('Enter a 15-character GSTIN to search past invoices.');
+      setGstinLookupStatus('Enter a 15-character GSTIN to search saved parties.');
       return;
     }
 
-    setGstinLookupStatus('Checking past invoices...');
+    setGstinLookupStatus('Checking saved parties...');
 
     try {
-      const response = await axios.get(`${API_URL}/invoices/lookup/by-gstin/${form.buyerGstin}`);
+      // 1. Try fetching from dedicated parties list
+      const response = await axios.get(`${API_URL}/parties/by-gstin/${form.buyerGstin}`);
       const buyerName = response.data?.buyerName || '';
       const buyerAddress = response.data?.buyerAddress || '';
+      const buyerMobile = response.data?.buyerMobile || '';
 
       setForm((current) => ({
         ...current,
         buyerName: buyerName || current.buyerName,
         buyerAddress: buyerAddress || current.buyerAddress,
+        buyerMobile: buyerMobile || current.buyerMobile,
       }));
 
-      setGstinLookupStatus(buyerName || buyerAddress ? 'Loaded company details from a previous invoice.' : '');
-    } catch (lookupError) {
-      if (lookupError?.response?.status === 404) {
-        setGstinLookupStatus('');
-        return;
-      }
+      setGstinLookupStatus('Loaded party details from directory.');
+    } catch (partyError) {
+      // 2. Fallback to checking previous invoices if not found in parties directory
+      if (partyError?.response?.status === 404) {
+        setGstinLookupStatus('Checking past invoices...');
+        try {
+          const response = await axios.get(`${API_URL}/invoices/lookup/by-gstin/${form.buyerGstin}`);
+          const buyerName = response.data?.buyerName || '';
+          const buyerAddress = response.data?.buyerAddress || '';
 
-      setGstinLookupStatus('');
+          setForm((current) => ({
+            ...current,
+            buyerName: buyerName || current.buyerName,
+            buyerAddress: buyerAddress || current.buyerAddress,
+          }));
+
+          setGstinLookupStatus('Loaded details from a previous invoice.');
+        } catch (invoiceError) {
+          setGstinLookupStatus('');
+        }
+      } else {
+        setGstinLookupStatus('');
+      }
     }
   }
 
@@ -183,7 +201,7 @@ function NewInvoice() {
       <form className="form-layout" onSubmit={handleSubmit}>
         <div className="panel section-spacing">
           <h2>Invoice Header</h2>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="form-grid grid grid-cols-1 gap-4 md:grid-cols-2">
             <label>
               <span>Invoice Number</span>
               <input
@@ -203,7 +221,7 @@ function NewInvoice() {
 
         <div className="panel section-spacing">
           <h2>Buyer Details</h2>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="form-grid grid grid-cols-1 gap-4 md:grid-cols-2">
             <label>
               <span>Buyer GSTIN</span>
               <input

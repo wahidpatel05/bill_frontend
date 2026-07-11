@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import InvoiceList from './pages/InvoiceList';
 import NewInvoice from './pages/NewInvoice';
 import ViewInvoice from './pages/ViewInvoice';
+import Parties from './pages/Parties';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -66,6 +67,7 @@ function App() {
     <Routes>
       <Route path="/" element={<InvoiceList />} />
       <Route path="/new" element={<NewInvoice />} />
+      <Route path="/parties" element={<Parties />} />
       <Route path="/invoice/:id" element={<ViewInvoice />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

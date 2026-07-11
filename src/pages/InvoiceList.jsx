@@ -70,9 +70,14 @@ function InvoiceList() {
             Create invoices, revisit old bills, and print the Patel Industries format in one place.
           </p>
         </div>
-        <button type="button" className="primary-button" onClick={() => navigate('/new')}>
-          + New Invoice
-        </button>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <button type="button" className="secondary-button" onClick={() => navigate('/parties')}>
+            👥 Manage Parties
+          </button>
+          <button type="button" className="primary-button" onClick={() => navigate('/new')}>
+            + New Invoice
+          </button>
+        </div>
       </header>
 
       <main className="panel">
@@ -113,7 +118,7 @@ function InvoiceList() {
         ) : (
           <div className="table-wrap">
             {/* Desktop Table View */}
-            <table className="list-table hidden md:table">
+            <table className="list-table hidden md:table w-full">
               <thead>
                 <tr>
                   <th>Invoice #</th>

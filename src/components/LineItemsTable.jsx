@@ -14,7 +14,7 @@ function LineItemsTable({ items, onChange, onAdd, onRemove, formatCurrency }) {
 
       <div className="table-wrap">
         {/* Desktop Table View */}
-        <table className="items-table hidden md:table">
+        <table className="items-table hidden md:table w-full">
           <thead>
             <tr>
               <th>Description</th>
