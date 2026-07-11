@@ -183,7 +183,7 @@ function NewInvoice() {
       <form className="form-layout" onSubmit={handleSubmit}>
         <div className="panel section-spacing">
           <h2>Invoice Header</h2>
-          <div className="form-grid two-columns">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <label>
               <span>Invoice Number</span>
               <input
@@ -203,7 +203,7 @@ function NewInvoice() {
 
         <div className="panel section-spacing">
           <h2>Buyer Details</h2>
-          <div className="form-grid two-columns">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <label>
               <span>Buyer GSTIN</span>
               <input
@@ -250,8 +250,8 @@ function NewInvoice() {
 
         <div className="panel section-spacing">
           <h2>GST Type</h2>
-          <div className="radio-group">
-            <label>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 font-medium">
               <input
                 type="radio"
                 name="gstType"
@@ -260,7 +260,7 @@ function NewInvoice() {
               />
               CGST + SGST (Intra-State)
             </label>
-            <label>
+            <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 font-medium">
               <input
                 type="radio"
                 name="gstType"
