@@ -41,6 +41,9 @@ function CopyBlock({ invoice, settings, currentCopy }) {
     ? '0.00'
     : (roundOffVal > 0 ? `+${roundOffVal.toFixed(2)}` : roundOffVal.toFixed(2));
 
+  const primaryUnit = invoice?.items?.[0]?.unit || 'PCS';
+  const unitLabel = primaryUnit.toLowerCase() === 'kg' ? 'kg' : (primaryUnit.toLowerCase() === 'pcs' ? 'pcs' : primaryUnit.toLowerCase());
+
   return (
     <section className="mx-auto bg-white text-black w-[210mm] h-[297mm] max-h-[297mm] overflow-hidden box-border p-[6mm] flex flex-col justify-between page-break-after-always print:m-0 print:h-[297mm] print:max-h-[297mm]">
       <div className="border border-black flex flex-col flex-1 h-full justify-between">
@@ -95,7 +98,7 @@ function CopyBlock({ invoice, settings, currentCopy }) {
                 TAX INVOICE
               </div>
               <div className="w-full flex flex-col gap-1 text-[12px] font-medium pl-4">
-                <div><strong>Invoice No.:</strong> {String(invoice?.invoiceNumber || '072').padStart(3, '0')}</div>
+                <div><strong>Invoice No.:</strong> {String(invoice?.invoiceNumber).padStart(3, '0')}</div>
                 <div><strong>Date:</strong> {invoice?.invoiceDate ? formatDateForPrint(invoice.invoiceDate) : ''}</div>
               </div>
             </div>
@@ -174,7 +177,7 @@ function CopyBlock({ invoice, settings, currentCopy }) {
                 {hasBags && (
                   <td className="border-r-2 border-black px-2 text-center align-middle">{totalBags}</td>
                 )}
-                <td className="border-r-2 border-black px-2 text-right align-middle">Net pcs/kgs</td>
+                <td className="border-r-2 border-black px-2 text-right align-middle">Net {unitLabel}</td>
                 <td className="border-r-2 border-black" />
                 <td className="border-r-2 border-black px-2 text-center align-middle">{formatQty(totalQuantity)}</td>
                 <td className="border-r-2 border-black" />
@@ -268,7 +271,7 @@ function CopyBlock({ invoice, settings, currentCopy }) {
 }
 
 function InvoicePrint({ invoice, settings }) {
-  const copies = ['Original', 'Duplicate', 'Triplicate'];
+  const copies = ['Triplicate', 'Duplicate', 'Original'];
 
   return (
     <>
