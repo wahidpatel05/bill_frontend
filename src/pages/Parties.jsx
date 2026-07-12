@@ -125,7 +125,7 @@ function Parties() {
               />
             </label>
 
-            <label className="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+            {/* <label className="flex flex-col gap-1 text-sm font-semibold text-slate-700">
               Mobile Number
               <input
                 type="text"
@@ -135,7 +135,7 @@ function Parties() {
                 placeholder="e.g. 9876543210"
                 className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-amber-600 focus:ring-4 focus:ring-amber-100"
               />
-            </label>
+            </label> */}
 
             <label className="flex flex-col gap-1 text-sm font-semibold text-slate-700">
               Address
@@ -162,7 +162,7 @@ function Parties() {
         {/* Parties List */}
         <div className="panel lg:col-span-2">
           <h2 className="text-lg font-semibold mb-4 text-slate-800">Saved Parties Directory</h2>
-          
+
           {loading ? (
             <div className="empty-state text-slate-500 py-10">Loading parties...</div>
           ) : parties.length === 0 ? (
