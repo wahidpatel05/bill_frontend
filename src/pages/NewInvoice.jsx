@@ -13,6 +13,7 @@ function createEmptyItem() {
     description: '',
     hsnCode: '3923',
     quantity: '',
+    bags: '',
     unit: 'PCS',
     rate: '',
   };
@@ -54,6 +55,7 @@ function NewInvoice() {
   const normalizedItems = form.items.map((item) => ({
     ...item,
     quantity: Number(item.quantity || 0),
+    bags: item.bags !== '' && item.bags !== null && item.bags !== undefined ? Number(item.bags) : null,
     rate: Number(item.rate || 0),
     amount: Number(item.quantity || 0) * Number(item.rate || 0),
   }));

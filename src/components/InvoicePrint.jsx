@@ -22,12 +22,13 @@ function CopyBlock({ invoice, settings, currentCopy }) {
 
   const totalQuantity = invoice?.items?.reduce((sum, item) => sum + Number(item.quantity || 0), 0) || 0;
   const isInterState = Boolean(invoice?.igstAmount && Number(invoice.igstAmount) > 0);
+  const hasBags = invoice?.items?.some((item) => item.bags !== null && item.bags !== undefined && item.bags !== '' && Number(item.bags) > 0);
   const addressFallback =
     'Mauli Bharat Udyog Nagar Industrial Estate, 1st Floor, Gala No. 51, Babasaheb Kotkar Road, Behind Sainath Industrial Estate, Goregaon (East), Mumbai - 400 063';
   const branchFallback = 'No. 6, Aasharam Waghral Pada, Mangurni Gaon, Rajawal Boidapada, Sativali, Vasai (E), Dist. Palghar';
 
   return (
-    <section className="mx-auto bg-white text-black w-[210mm] h-[297mm] max-h-[297mm] box-border p-[6mm] flex flex-col justify-between page-break-after-always print:m-0 print:h-[297mm] print:max-h-[297mm]">
+    <section className="mx-auto bg-white text-black w-[210mm] h-[297mm] max-h-[297mm] overflow-hidden box-border p-[6mm] flex flex-col justify-between page-break-after-always print:m-0 print:h-[297mm] print:max-h-[297mm]">
       <div className="border border-black flex flex-col flex-1 h-full justify-between">
         
         {/* TOP HEADER */}
@@ -90,21 +91,24 @@ function CopyBlock({ invoice, settings, currentCopy }) {
           <table className="w-full border-collapse text-left text-[11.5px]">
             <thead>
               <tr className="border-b-2 border-black">
-                <th className="w-[52%] border-r-2 border-black px-2 py-1.5 text-center font-bold">DESCRIPTION</th>
-                <th className="w-[12%] border-r-2 border-black px-2 py-1.5 text-center font-bold">HSN/SAC Code</th>
-                <th className="w-[12%] border-r-2 border-black px-2 py-1.5 text-center font-bold">Quantity</th>
-                <th className="w-[11%] border-r-2 border-black px-2 py-1.5 text-center font-bold leading-tight">
+                <th className={`${hasBags ? 'w-[44%]' : 'w-[52%]'} border-r-2 border-black px-2 py-1.5 text-center font-bold`}>DESCRIPTION</th>
+                <th className={`${hasBags ? 'w-[10%]' : 'w-[12%]'} border-r-2 border-black px-2 py-1.5 text-center font-bold`}>HSN/SAC Code</th>
+                <th className={`${hasBags ? 'w-[10%]' : 'w-[12%]'} border-r-2 border-black px-2 py-1.5 text-center font-bold`}>Quantity</th>
+                {hasBags && (
+                  <th className="w-[9%] border-r-2 border-black px-2 py-1.5 text-center font-bold">Bags</th>
+                )}
+                <th className={`${hasBags ? 'w-[12%]' : 'w-[11%]'} border-r-2 border-black px-2 py-1.5 text-center font-bold leading-tight`}>
                   RATE<br /><span className="text-[10px] font-normal">Rs. P.</span>
                 </th>
-                <th className="w-[13%] px-2 py-1.5 text-center font-bold leading-tight">
+                <th className={`${hasBags ? 'w-[15%]' : 'w-[13%]'} px-2 py-1.5 text-center font-bold leading-tight`}>
                   AMOUNT<br /><span className="text-[10px] font-normal">Rs. P.</span>
                 </th>
               </tr>
             </thead>
             <tbody>
-              {(invoice?.items || [
-                { description: 'Vibrator pad 8x12 + 2 FebTep + 50mm pal', hsnCode: '3923', quantity: 25000, unit: 'PCS', rate: 0.95, amount: 23750.0 },
-                { description: 'Storage box 7½ x 11 + 2 FebTep', hsnCode: '3923', quantity: 22600, unit: 'PCS', rate: 0.74, amount: 16724.0 },
+                {(invoice?.items || [
+                { description: 'Vibrator pad 8x12 + 2 FebTep + 50mm pal', hsnCode: '3923', quantity: 25000, bags: null, unit: 'PCS', rate: 0.95, amount: 23750.0 },
+                { description: 'Storage box 7½ x 11 + 2 FebTep', hsnCode: '3923', quantity: 22600, bags: null, unit: 'PCS', rate: 0.74, amount: 16724.0 },
               ]).map((item, index) => (
                 <tr key={index} className="h-8">
                   <td className="border-r-2 border-black px-2 py-1 align-middle font-medium">{item.description}</td>
@@ -112,6 +116,11 @@ function CopyBlock({ invoice, settings, currentCopy }) {
                   <td className="border-r-2 border-black px-2 py-1 align-middle text-right font-bold pr-4">
                     {item.quantity} {item.unit || 'PCS'}
                   </td>
+                  {hasBags && (
+                    <td className="border-r-2 border-black px-2 py-1 align-middle text-right font-bold pr-3">
+                      {item.bags != null && item.bags !== '' && Number(item.bags) > 0 ? Number(item.bags) : '—'}
+                    </td>
+                  )}
                   <td className="border-r-2 border-black px-2 py-1 align-middle text-right pr-3">{formatPrintAmount(item.rate)}</td>
                   <td className="px-2 py-1 align-middle text-right font-bold pr-3">{formatPrintAmount(item.amount)}</td>
                 </tr>
@@ -122,6 +131,7 @@ function CopyBlock({ invoice, settings, currentCopy }) {
                   <td className="border-r-2 border-black" />
                   <td className="border-r-2 border-black" />
                   <td className="border-r-2 border-black" />
+                  {hasBags && <td className="border-r-2 border-black" />}
                   <td className="border-r-2 border-black" />
                   <td />
                 </tr>
