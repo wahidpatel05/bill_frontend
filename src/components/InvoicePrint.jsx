@@ -36,6 +36,11 @@ function CopyBlock({ invoice, settings, currentCopy }) {
     'Mauli Bharat Udyog Nagar Industrial Estate, 1st Floor, Gala No. 51, Babasaheb Kotkar Road, Behind Sainath Industrial Estate, Goregaon (East), Mumbai - 400 063';
   const branchFallback = 'No. 6, Aasharam Waghral Pada, Mangurni Gaon, Rajawal Boidapada, Sativali, Vasai (E), Dist. Palghar';
 
+  const roundOffVal = invoice ? (invoice.roundOff ?? 0) : -0.32;
+  const formattedRoundOff = roundOffVal === 0
+    ? '0.00'
+    : (roundOffVal > 0 ? `+${roundOffVal.toFixed(2)}` : roundOffVal.toFixed(2));
+
   return (
     <section className="mx-auto bg-white text-black w-[210mm] h-[297mm] max-h-[297mm] overflow-hidden box-border p-[6mm] flex flex-col justify-between page-break-after-always print:m-0 print:h-[297mm] print:max-h-[297mm]">
       <div className="border border-black flex flex-col flex-1 h-full justify-between">
@@ -64,7 +69,7 @@ function CopyBlock({ invoice, settings, currentCopy }) {
           <div className="border-b-2 border-black px-2 py-1 text-center text-[10.5px] font-bold leading-tight">
             <div className="uppercase tracking-[0.2px] mb-0.5">MANUFACTURERS OF: PLASTIC BAGS, TUBING, GRAVURE PRINTED, FLEXO PRINTED</div>
             <div className="text-[10px] font-medium text-gray-800">
-              Regd. Office: {settings?.address || addressFallback} | E-mail: {settings?.email || 'patelindustries@gmail.com'}
+              Regd. Office: {settings?.address || addressFallback} | E-mail: {settings?.email || 'patelindustries92@gmail.com'}
             </div>
             <div className="text-[10px] font-medium text-gray-800">Branch: {settings?.branchAddress || branchFallback}</div>
           </div>
@@ -74,13 +79,13 @@ function CopyBlock({ invoice, settings, currentCopy }) {
             <div className="flex flex-1 flex-col justify-between border-r-2 border-black p-2">
               <div>
                 <div className="mb-0.5 text-[11px] italic">Sold To, Messrs:</div>
-                <div className="mb-1 text-[15px] font-bold tracking-wide">{invoice?.buyerName || 'Wholesale Dock LLP'}</div>
+                <div className="mb-1 text-[15px] font-bold tracking-wide">{invoice?.buyerName}</div>
                 <div className="mb-2 whitespace-pre-line text-[11px] leading-[1.3] font-medium">
-                  {invoice?.buyerAddress || 'Plot No. 3, Green Park 2, Behind Mathura Hotel,\nKaman Bhivandi Road, Vasai (E)'}
+                  {invoice?.buyerAddress}
                 </div>
               </div>
               <div className="text-[11px]">
-                <div><strong>Party's GSTIN No.:</strong> <span className="font-semibold">{invoice?.buyerGstin || '27AACFW4913C1ZE'}</span></div>
+                <div><strong>Party's GSTIN No.:</strong> <span className="font-semibold">{invoice?.buyerGstin}</span></div>
                 <div><strong>State Code:</strong> <span className="font-semibold">{invoice?.buyerStateCode || '27'}</span></div>
               </div>
             </div>
@@ -100,12 +105,12 @@ function CopyBlock({ invoice, settings, currentCopy }) {
           <table className="w-full border-collapse text-left text-[11.5px] border-b-2 border-black">
             <thead>
               <tr className="border-b-2 border-black">
-                <th className={`${hasBags ? 'w-[44%]' : 'w-[52%]'} border-r-2 border-black px-2 py-1.5 text-center font-bold`}>DESCRIPTION</th>
-                <th className={`${hasBags ? 'w-[10%]' : 'w-[12%]'} border-r-2 border-black px-2 py-1.5 text-center font-bold`}>HSN/SAC Code</th>
-                <th className={`${hasBags ? 'w-[10%]' : 'w-[12%]'} border-r-2 border-black px-2 py-1.5 text-center font-bold`}>Quantity</th>
                 {hasBags && (
                   <th className="w-[9%] border-r-2 border-black px-2 py-1.5 text-center font-bold">Bags</th>
                 )}
+                <th className={`${hasBags ? 'w-[44%]' : 'w-[52%]'} border-r-2 border-black px-2 py-1.5 text-center font-bold`}>DESCRIPTION</th>
+                <th className={`${hasBags ? 'w-[10%]' : 'w-[12%]'} border-r-2 border-black px-2 py-1.5 text-center font-bold`}>HSN/SAC Code</th>
+                <th className={`${hasBags ? 'w-[10%]' : 'w-[12%]'} border-r-2 border-black px-2 py-1.5 text-center font-bold`}>Quantity</th>
                 <th className={`${hasBags ? 'w-[12%]' : 'w-[11%]'} border-r-2 border-black px-2 py-1.5 text-center font-bold leading-tight`}>
                   RATE<br /><span className="text-[10px] font-normal">Rs. P.</span>
                 </th>
@@ -127,6 +132,11 @@ function CopyBlock({ invoice, settings, currentCopy }) {
 
                 return (
                   <tr key={index} className="h-8">
+                    {hasBags && (
+                      <td className="border-r-2 border-black px-2 py-1 align-middle text-right font-bold pr-3">
+                        {item.bags != null && item.bags !== '' && Number(item.bags) > 0 ? Number(item.bags) : '—'}
+                      </td>
+                    )}
                     <td className="border-r-2 border-black px-2 py-1 align-middle font-medium">
                       {isFirstRowHeader ? (
                         <div className="flex flex-col">
@@ -141,11 +151,6 @@ function CopyBlock({ invoice, settings, currentCopy }) {
                     <td className="border-r-2 border-black px-2 py-1 align-middle text-right font-bold pr-4">
                       {formatQty(item.quantity)} {item.unit || 'PCS'}
                     </td>
-                    {hasBags && (
-                      <td className="border-r-2 border-black px-2 py-1 align-middle text-right font-bold pr-3">
-                        {item.bags != null && item.bags !== '' && Number(item.bags) > 0 ? Number(item.bags) : '—'}
-                      </td>
-                    )}
                     <td className="border-r-2 border-black px-2 py-1 align-middle text-right pr-3">{formatPrintAmount(item.rate)}</td>
                     <td className="px-2 py-1 align-middle text-right font-bold pr-3">{formatPrintAmount(item.amount)}</td>
                   </tr>
@@ -155,10 +160,10 @@ function CopyBlock({ invoice, settings, currentCopy }) {
               {/* Empty filler rows */}
               {[...Array(Math.max(0, 7 - (invoice?.items?.length || 2)))].map((_, index) => (
                 <tr key={`empty-${index}`} className="h-8">
-                  <td className="border-r-2 border-black" />
-                  <td className="border-r-2 border-black" />
-                  <td className="border-r-2 border-black" />
                   {hasBags && <td className="border-r-2 border-black" />}
+                  <td className="border-r-2 border-black" />
+                  <td className="border-r-2 border-black" />
+                  <td className="border-r-2 border-black" />
                   <td className="border-r-2 border-black" />
                   <td />
                 </tr>
@@ -166,12 +171,12 @@ function CopyBlock({ invoice, settings, currentCopy }) {
 
               {/* Net pcs/kgs Row */}
               <tr className="h-7.5 border-t-2 border-b-2 border-black bg-white font-bold">
-                <td className="border-r-2 border-black px-2 text-right align-middle">Net pcs/kgs</td>
-                <td className="border-r-2 border-black" />
-                <td className="border-r-2 border-black px-2 text-center align-middle">{formatQty(totalQuantity)}</td>
                 {hasBags && (
                   <td className="border-r-2 border-black px-2 text-center align-middle">{totalBags}</td>
                 )}
+                <td className="border-r-2 border-black px-2 text-right align-middle">Net pcs/kgs</td>
+                <td className="border-r-2 border-black" />
+                <td className="border-r-2 border-black px-2 text-center align-middle">{formatQty(totalQuantity)}</td>
                 <td className="border-r-2 border-black" />
                 <td />
               </tr>
@@ -179,7 +184,7 @@ function CopyBlock({ invoice, settings, currentCopy }) {
               {/* Total Row */}
               <tr className="h-8 border-b border-black font-bold">
                 <td colSpan={hasBags ? 5 : 4} className="border-r-2 border-black px-2 text-right align-middle pr-3">Total</td>
-                <td className="px-2 py-1 align-middle text-right pr-3">{formatPrintAmount(invoice?.subtotal || 40474.0)}</td>
+                <td className="px-2 py-1 align-middle text-right pr-3">{formatPrintAmount(invoice?.subtotal ?? 40474.0)}</td>
               </tr>
 
               {/* GST Rows */}
@@ -187,30 +192,30 @@ function CopyBlock({ invoice, settings, currentCopy }) {
                 <>
                   <tr className="h-8 border-b border-black">
                     <td colSpan={hasBags ? 5 : 4} className="border-r-2 border-black px-2 text-right align-middle font-bold pr-3">CGST {invoice?.cgstRate || 9}%</td>
-                    <td className="px-2 py-1 align-middle text-right pr-3">{formatPrintAmount(invoice?.cgstAmount || 3642.66)}</td>
+                    <td className="px-2 py-1 align-middle text-right pr-3">{formatPrintAmount(invoice?.cgstAmount ?? 3642.66)}</td>
                   </tr>
                   <tr className="h-8 border-b border-black">
                     <td colSpan={hasBags ? 5 : 4} className="border-r-2 border-black px-2 text-right align-middle font-bold pr-3">SGST {invoice?.sgstRate || 9}%</td>
-                    <td className="px-2 py-1 align-middle text-right pr-3">{formatPrintAmount(invoice?.sgstAmount || 3642.66)}</td>
+                    <td className="px-2 py-1 align-middle text-right pr-3">{formatPrintAmount(invoice?.sgstAmount ?? 3642.66)}</td>
                   </tr>
                 </>
               ) : (
                 <tr className="h-8 border-b border-black">
                   <td colSpan={hasBags ? 5 : 4} className="border-r-2 border-black px-2 text-right align-middle font-bold pr-3">IGST {invoice?.igstRate || 18}%</td>
-                  <td className="px-2 py-1 align-middle text-right pr-3">{formatPrintAmount(invoice?.igstAmount)}</td>
+                  <td className="px-2 py-1 align-middle text-right pr-3">{formatPrintAmount(invoice?.igstAmount ?? 0)}</td>
                 </tr>
               )}
 
               {/* Round Off Row */}
               <tr className="h-8 border-b border-black">
                 <td colSpan={hasBags ? 5 : 4} className="border-r-2 border-black px-2 text-right align-middle font-bold pr-3">Round off</td>
-                <td className="px-2 py-1 align-middle text-right pr-3">{Number(invoice?.roundOff || -0.32).toFixed(2)}</td>
+                <td className="px-2 py-1 align-middle text-right pr-3">{formattedRoundOff}</td>
               </tr>
 
               {/* GRAND TOTAL Row */}
               <tr className="h-9 bg-[#fafafa] font-bold">
                 <td colSpan={hasBags ? 5 : 4} className="border-r-2 border-black px-2 text-right align-middle font-extrabold pr-3 tracking-wide">GRAND TOTAL</td>
-                <td className="px-2 py-1 align-middle text-right font-extrabold text-[13px] pr-3">{formatPrintAmount(invoice?.grandTotal || 47759.0)}</td>
+                <td className="px-2 py-1 align-middle text-right font-extrabold text-[13px] pr-3">{formatPrintAmount(invoice?.grandTotal ?? 47759.0)}</td>
               </tr>
             </tbody>
           </table>

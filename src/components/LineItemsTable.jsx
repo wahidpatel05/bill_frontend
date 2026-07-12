@@ -17,10 +17,10 @@ function LineItemsTable({ items, onChange, onAdd, onRemove, formatCurrency }) {
         <table className="items-table hidden md:table w-full">
           <thead>
             <tr>
+              <th>Bags <span style={{ fontWeight: 'normal', fontSize: '0.75em', opacity: 0.65 }}>(optional)</span></th>
               <th>Description</th>
               <th>HSN Code</th>
               <th>Quantity</th>
-              <th>Bags <span style={{ fontWeight: 'normal', fontSize: '0.75em', opacity: 0.65 }}>(optional)</span></th>
               <th>Unit</th>
               <th>Rate</th>
               <th>Amount</th>
@@ -33,6 +33,16 @@ function LineItemsTable({ items, onChange, onAdd, onRemove, formatCurrency }) {
 
               return (
                 <tr key={index}>
+                  <td>
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      placeholder="—"
+                      value={item.bags}
+                      onChange={(event) => onChange(index, 'bags', event.target.value)}
+                    />
+                  </td>
                   <td>
                     <input
                       type="text"
@@ -55,16 +65,6 @@ function LineItemsTable({ items, onChange, onAdd, onRemove, formatCurrency }) {
                       step="any"
                       value={item.quantity}
                       onChange={(event) => onChange(index, 'quantity', event.target.value)}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      min="0"
-                      step="any"
-                      placeholder="—"
-                      value={item.bags}
-                      onChange={(event) => onChange(index, 'bags', event.target.value)}
                     />
                   </td>
                   <td>

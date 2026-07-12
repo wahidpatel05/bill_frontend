@@ -20,8 +20,13 @@ function ViewInvoice() {
           axios.get(`${API_URL}/settings`),
         ]);
 
-        setInvoice(invoiceResponse.data);
+        const inv = invoiceResponse.data;
+        setInvoice(inv);
         setSettings(settingsResponse.data);
+
+        if (inv) {
+          document.title = `${inv.buyerName || 'Party'} bill number ${inv.invoiceNumber}`;
+        }
       } catch (fetchError) {
         setError('Failed to load invoice.');
       } finally {
@@ -30,6 +35,10 @@ function ViewInvoice() {
     }
 
     loadInvoice();
+
+    return () => {
+      document.title = 'Patel Industries Billing';
+    };
   }, [id]);
 
   return (
