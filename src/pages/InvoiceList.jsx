@@ -8,8 +8,12 @@ function formatDate(value) {
   if (!value) {
     return '';
   }
-
-  return new Date(value).toLocaleDateString('en-GB');
+  const plain = String(value).split('T')[0];
+  const parts = plain.split('-');
+  if (parts.length === 3) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  return plain;
 }
 
 function InvoiceList() {

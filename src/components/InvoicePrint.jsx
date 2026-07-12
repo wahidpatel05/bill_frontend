@@ -2,11 +2,19 @@ import React from 'react';
 
 function formatDateForPrint(dateValue) {
   if (!dateValue) return '';
-  const date = new Date(dateValue);
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
+  // Parse YYYY-MM-DD directly to avoid UTC-to-local timezone shift
+  const plain = String(dateValue).split('T')[0];
+  const parts = plain.split('-');
+  if (parts.length === 3) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  // Fallback (shouldn't reach here for normal dates)
+  return plain;
+}
+
+function formatQty(value) {
+  const n = Number(value || 0);
+  return n.toFixed(3);
 }
 
 function formatPrintAmount(value) {
@@ -21,6 +29,7 @@ function CopyBlock({ invoice, settings, currentCopy }) {
   ];
 
   const totalQuantity = invoice?.items?.reduce((sum, item) => sum + Number(item.quantity || 0), 0) || 0;
+  const totalBags = invoice?.items?.reduce((sum, item) => sum + (item.bags != null && item.bags !== '' ? Number(item.bags) : 0), 0) || 0;
   const isInterState = Boolean(invoice?.igstAmount && Number(invoice.igstAmount) > 0);
   const hasBags = invoice?.items?.some((item) => item.bags !== null && item.bags !== undefined && item.bags !== '' && Number(item.bags) > 0);
   const addressFallback =
@@ -30,7 +39,7 @@ function CopyBlock({ invoice, settings, currentCopy }) {
   return (
     <section className="mx-auto bg-white text-black w-[210mm] h-[297mm] max-h-[297mm] overflow-hidden box-border p-[6mm] flex flex-col justify-between page-break-after-always print:m-0 print:h-[297mm] print:max-h-[297mm]">
       <div className="border border-black flex flex-col flex-1 h-full justify-between">
-        
+
         {/* TOP HEADER */}
         <div>
           <div className="flex items-start border-b-2 border-black px-3 py-2">
@@ -82,13 +91,13 @@ function CopyBlock({ invoice, settings, currentCopy }) {
               </div>
               <div className="w-full flex flex-col gap-1 text-[12px] font-medium pl-4">
                 <div><strong>Invoice No.:</strong> {String(invoice?.invoiceNumber || '072').padStart(3, '0')}</div>
-                <div><strong>Date:</strong> {invoice?.invoiceDate ? formatDateForPrint(invoice.invoiceDate) : '12/06/2026'}</div>
+                <div><strong>Date:</strong> {invoice?.invoiceDate ? formatDateForPrint(invoice.invoiceDate) : ''}</div>
               </div>
             </div>
           </div>
 
-          {/* ITEM TABLES */}
-          <table className="w-full border-collapse text-left text-[11.5px]">
+          {/* ITEM TABLE */}
+          <table className="w-full border-collapse text-left text-[11.5px] border-b-2 border-black">
             <thead>
               <tr className="border-b-2 border-black">
                 <th className={`${hasBags ? 'w-[44%]' : 'w-[52%]'} border-r-2 border-black px-2 py-1.5 text-center font-bold`}>DESCRIPTION</th>
@@ -106,26 +115,44 @@ function CopyBlock({ invoice, settings, currentCopy }) {
               </tr>
             </thead>
             <tbody>
-                {(invoice?.items || [
-                { description: 'Vibrator pad 8x12 + 2 FebTep + 50mm pal', hsnCode: '3923', quantity: 25000, bags: null, unit: 'PCS', rate: 0.95, amount: 23750.0 },
-                { description: 'Storage box 7½ x 11 + 2 FebTep', hsnCode: '3923', quantity: 22600, bags: null, unit: 'PCS', rate: 0.74, amount: 16724.0 },
-              ]).map((item, index) => (
-                <tr key={index} className="h-8">
-                  <td className="border-r-2 border-black px-2 py-1 align-middle font-medium">{item.description}</td>
-                  <td className="border-r-2 border-black px-2 py-1 align-middle text-center">{item.hsnCode}</td>
-                  <td className="border-r-2 border-black px-2 py-1 align-middle text-right font-bold pr-4">
-                    {item.quantity} {item.unit || 'PCS'}
-                  </td>
-                  {hasBags && (
-                    <td className="border-r-2 border-black px-2 py-1 align-middle text-right font-bold pr-3">
-                      {item.bags != null && item.bags !== '' && Number(item.bags) > 0 ? Number(item.bags) : '—'}
-                    </td>
-                  )}
-                  <td className="border-r-2 border-black px-2 py-1 align-middle text-right pr-3">{formatPrintAmount(item.rate)}</td>
-                  <td className="px-2 py-1 align-middle text-right font-bold pr-3">{formatPrintAmount(item.amount)}</td>
-                </tr>
-              ))}
+              {/* Actual line items */}
+              {(invoice?.items || [
+                { description: '8x12', hsnCode: '3923', quantity: 25000, bags: null, unit: 'PCS', rate: 0.95, amount: 23750.0 },
+                { description: '7½x11', hsnCode: '3923', quantity: 22600, bags: null, unit: 'PCS', rate: 0.74, amount: 16724.0 },
+              ]).map((item, index) => {
+                const desc = item.description || '';
+                const lowerDesc = desc.toLowerCase();
+                const hasPlastic = lowerDesc.includes('plastic') && lowerDesc.includes('packaging');
+                const isFirstRowHeader = index === 0 && !hasPlastic;
 
+                return (
+                  <tr key={index} className="h-8">
+                    <td className="border-r-2 border-black px-2 py-1 align-middle font-medium">
+                      {isFirstRowHeader ? (
+                        <div className="flex flex-col">
+                          <span className="font-semibold italic text-[11px]">Plastic Bags Industrial Packaging</span>
+                          {desc && <span>{desc}</span>}
+                        </div>
+                      ) : (
+                        desc
+                      )}
+                    </td>
+                    <td className="border-r-2 border-black px-2 py-1 align-middle text-center">{item.hsnCode}</td>
+                    <td className="border-r-2 border-black px-2 py-1 align-middle text-right font-bold pr-4">
+                      {formatQty(item.quantity)} {item.unit || 'PCS'}
+                    </td>
+                    {hasBags && (
+                      <td className="border-r-2 border-black px-2 py-1 align-middle text-right font-bold pr-3">
+                        {item.bags != null && item.bags !== '' && Number(item.bags) > 0 ? Number(item.bags) : '—'}
+                      </td>
+                    )}
+                    <td className="border-r-2 border-black px-2 py-1 align-middle text-right pr-3">{formatPrintAmount(item.rate)}</td>
+                    <td className="px-2 py-1 align-middle text-right font-bold pr-3">{formatPrintAmount(item.amount)}</td>
+                  </tr>
+                );
+              })}
+
+              {/* Empty filler rows */}
               {[...Array(Math.max(0, 7 - (invoice?.items?.length || 2)))].map((_, index) => (
                 <tr key={`empty-${index}`} className="h-8">
                   <td className="border-r-2 border-black" />
@@ -137,59 +164,60 @@ function CopyBlock({ invoice, settings, currentCopy }) {
                 </tr>
               ))}
 
-              {/* NET WEIGHTS / PIECES SUM */}
-              <tr className="h-7.5 border-y-2 border-black bg-white font-bold">
+              {/* Net pcs/kgs Row */}
+              <tr className="h-7.5 border-t-2 border-b-2 border-black bg-white font-bold">
                 <td className="border-r-2 border-black px-2 text-right align-middle">Net pcs/kgs</td>
                 <td className="border-r-2 border-black" />
-                <td className="border-r-2 border-black px-2 text-center align-middle">{totalQuantity || '47600'}</td>
+                <td className="border-r-2 border-black px-2 text-center align-middle">{formatQty(totalQuantity)}</td>
+                {hasBags && (
+                  <td className="border-r-2 border-black px-2 text-center align-middle">{totalBags}</td>
+                )}
                 <td className="border-r-2 border-black" />
                 <td />
+              </tr>
+
+              {/* Total Row */}
+              <tr className="h-8 border-b border-black font-bold">
+                <td colSpan={hasBags ? 5 : 4} className="border-r-2 border-black px-2 text-right align-middle pr-3">Total</td>
+                <td className="px-2 py-1 align-middle text-right pr-3">{formatPrintAmount(invoice?.subtotal || 40474.0)}</td>
+              </tr>
+
+              {/* GST Rows */}
+              {!isInterState ? (
+                <>
+                  <tr className="h-8 border-b border-black">
+                    <td colSpan={hasBags ? 5 : 4} className="border-r-2 border-black px-2 text-right align-middle font-bold pr-3">CGST {invoice?.cgstRate || 9}%</td>
+                    <td className="px-2 py-1 align-middle text-right pr-3">{formatPrintAmount(invoice?.cgstAmount || 3642.66)}</td>
+                  </tr>
+                  <tr className="h-8 border-b border-black">
+                    <td colSpan={hasBags ? 5 : 4} className="border-r-2 border-black px-2 text-right align-middle font-bold pr-3">SGST {invoice?.sgstRate || 9}%</td>
+                    <td className="px-2 py-1 align-middle text-right pr-3">{formatPrintAmount(invoice?.sgstAmount || 3642.66)}</td>
+                  </tr>
+                </>
+              ) : (
+                <tr className="h-8 border-b border-black">
+                  <td colSpan={hasBags ? 5 : 4} className="border-r-2 border-black px-2 text-right align-middle font-bold pr-3">IGST {invoice?.igstRate || 18}%</td>
+                  <td className="px-2 py-1 align-middle text-right pr-3">{formatPrintAmount(invoice?.igstAmount)}</td>
+                </tr>
+              )}
+
+              {/* Round Off Row */}
+              <tr className="h-8 border-b border-black">
+                <td colSpan={hasBags ? 5 : 4} className="border-r-2 border-black px-2 text-right align-middle font-bold pr-3">Round off</td>
+                <td className="px-2 py-1 align-middle text-right pr-3">{Number(invoice?.roundOff || -0.32).toFixed(2)}</td>
+              </tr>
+
+              {/* GRAND TOTAL Row */}
+              <tr className="h-9 bg-[#fafafa] font-bold">
+                <td colSpan={hasBags ? 5 : 4} className="border-r-2 border-black px-2 text-right align-middle font-extrabold pr-3 tracking-wide">GRAND TOTAL</td>
+                <td className="px-2 py-1 align-middle text-right font-extrabold text-[13px] pr-3">{formatPrintAmount(invoice?.grandTotal || 47759.0)}</td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        {/* BOTTOM SECTION (FINANCIALS & FOOTER) */}
+        {/* BOTTOM SECTION (FINANCIALS & FOOTER) — no gap, directly attached */}
         <div className="mt-auto">
-          {/* CALCULATIONS ROW (Added upper border-t-2 to form a continuous line spanning all columns above "Total") */}
-          <div className="flex border-t-2 border-black">
-            <div className="flex-1 border-r-2 border-black bg-white" />
-            <div className="flex w-60 flex-col">
-              <div className="flex border-b border-black px-2 py-1 text-[11.5px]">
-                <div className="flex-1 pr-3 text-right font-bold">Total</div>
-                <div className="w-21.25 text-right font-bold pr-1">{formatPrintAmount(invoice?.subtotal || 40474.0)}</div>
-              </div>
-
-              {!isInterState ? (
-                <>
-                  <div className="flex border-b border-black px-2 py-1 text-[11.5px]">
-                    <div className="flex-1 pr-3 text-right font-bold">CGST {invoice?.cgstRate || 9}%</div>
-                    <div className="w-21.25 text-right pr-1">{formatPrintAmount(invoice?.cgstAmount || 3642.66)}</div>
-                  </div>
-                  <div className="flex border-b border-black px-2 py-1 text-[11.5px]">
-                    <div className="flex-1 pr-3 text-right font-bold">SGST {invoice?.sgstRate || 9}%</div>
-                    <div className="w-21.25 text-right pr-1">{formatPrintAmount(invoice?.sgstAmount || 3642.66)}</div>
-                  </div>
-                </>
-              ) : (
-                <div className="flex border-b border-black px-2 py-1 text-[11.5px]">
-                  <div className="flex-1 pr-3 text-right font-bold">IGST {invoice?.igstRate || 18}%</div>
-                  <div className="w-21.25 text-right pr-1">{formatPrintAmount(invoice?.igstAmount)}</div>
-                </div>
-              )}
-
-              <div className="flex border-b border-black px-2 py-1 text-[11.5px]">
-                <div className="flex-1 pr-3 text-right font-bold">Round off</div>
-                <div className="w-21.25 text-right pr-1">{Number(invoice?.roundOff || -0.32).toFixed(2)}</div>
-              </div>
-
-              <div className="flex bg-[#fafafa] px-2 py-1.5 text-[12px] font-bold border-t border-black">
-                <div className="flex-1 pr-3 text-right tracking-wide">GRAND TOTAL</div>
-                <div className="w-21.25 text-right text-[13px] pr-1 font-extrabold">{formatPrintAmount(invoice?.grandTotal || 47759.0)}</div>
-              </div>
-            </div>
-          </div>
-
           {/* WORDS ROW */}
           <div className="border-b-2 border-black px-2 py-1.5 text-[11.5px] font-bold">
             Total Invoice Amount in Words:{' '}
@@ -239,7 +267,8 @@ function InvoicePrint({ invoice, settings }) {
 
   return (
     <>
-      <style dangerouslySetInnerHTML={{__html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @media print {
           body, html {
             margin: 0 !important;
@@ -257,14 +286,14 @@ function InvoicePrint({ invoice, settings }) {
           }
         }
       `}} />
-      
+
       <div className="bg-gray-200 py-6 print:bg-white print:py-0 flex flex-col gap-4 print:gap-0">
         {copies.map((copyName) => (
-          <CopyBlock 
-            key={copyName} 
-            invoice={invoice} 
-            settings={settings} 
-            currentCopy={copyName} 
+          <CopyBlock
+            key={copyName}
+            invoice={invoice}
+            settings={settings}
+            currentCopy={copyName}
           />
         ))}
       </div>
